@@ -59,7 +59,6 @@ Adafruit_NeoPixel NEO_PIXEL(24, NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ800); // RGB LED
 class Timer{
     // Private Variables
     private: 
-
         // Millisecond timers
         unsigned long Timer_Start_Millis = 0; // Stores the time start time  
         bool Timer_Started_Millis = false; // Indicates if the timer is started 
@@ -70,7 +69,6 @@ class Timer{
 
     // Public Variables
     public: 
-
         // Checks whether a specific amount of time has elapsed given time in milliseconds
         bool Check_Time_Millis(unsigned long Time){
             // Checks if the system timer has started 
