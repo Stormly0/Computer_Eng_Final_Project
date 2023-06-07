@@ -288,7 +288,7 @@ float Get_Temperature(){
     long temperature = analogRead(TEMPERATURE_SENSOR); // Range 0 - 1024
 
     // Convert the analog reading to voltage 
-    float voltage = (temperature * 5.0) / 1024.0;
+    float voltage = temperature/10; // Reads from LM35 sensor which outputs 0 - 10mv/c
 
     // Convert the voltage to temperature in degrees celsius
     float celsius = (voltage - 0.5) * 100; 
