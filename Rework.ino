@@ -478,7 +478,7 @@ void Display_Top_Basic(){
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
         CONTROL_LCD.print("State: ");
-        CONTROL_LCD.print(Fan_State);
+        CONTROL_LCD.print((Fan_State == 0) ? "OFF" : "ON");
     #else
         // Real Environment 
 
@@ -495,7 +495,7 @@ void Display_Top_Basic(){
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
         CONTROL_LCD.print("State: ");
-        CONTROL_LCD.print(Fan_State);
+        CONTROL_LCD.print((Fan_State == 0) ? "OFF" : "ON");
     #endif
     
 }
