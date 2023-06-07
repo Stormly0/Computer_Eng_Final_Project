@@ -11,10 +11,10 @@
 // Static variables cannot be initialized in a class unless the inline keyword is present 
 
 // Defines whether the system is in a virtual environment or not 
-#define VIRTUAL_ENVIRONMENT true
+#define VIRTUAL_ENVIRONMENT false
 
 // Pin State Variables 
- 
+
 // Buttons
 #define AUTO_BUTTON 8
 #define OFF_BUTTON 7
@@ -29,7 +29,7 @@
 #define PIEZO 2
 
 // Fan Motor
-#define DC_MOTOR 11 
+#define DC_MOTOR 13 
 
 // IR Receiver pin 
 #define IR_RECEIVER 9
@@ -66,20 +66,21 @@ Adafruit_NeoPixel NEO_PIXEL(24, NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ800); // RGB LED
 
 // ------------ [CLASSES] ------------ 
 
+static int Timer_Count = 0; 
 // A timer that allows for independent timing of different events 
 class Timer{
 
     // Constructor 
     public: 
         Timer(){
-            Timer_Count++; // Increments the number of timers that have been created 
+            ::Timer_Count++; // Increments the number of timers that have been created 
         }
 
 
     // Private Variables
     private: 
         // Counters 
-        inline static unsigned int Timer_Count = 0; // Indicates how many timers have been created
+        unsigned int Timer_Count = 0; // Indicates how many timers have been created
 
         // State 
         bool Running = false; // Indicates whether the timer is running or not
@@ -149,19 +150,18 @@ class Timer{
         }
 };
 
-
 // ------------ [Variables] ------------ 
 
 // --- [System Configurations] --- \\ 
 
 // Lighting Parameters 
 const unsigned int Max_Neo_Pixel_Brightness = 20; // Max Brightness of the NeoPixel [0 - 255]
-const unsigned int Neo_Pixel_Delay_Between_Lights = 500; // Delay between each light in the NeoPixel [ms]
+const unsigned int Neo_Pixel_Delay_Between_Lights = 100; // Delay between each light in the NeoPixel [ms]
 const unsigned int Max_LED_Brightness = 100; // Max Brightness of the LEDs [0 - 255]
 
 // LCD parameters
 const unsigned int LCD_Refresh_Rate = 1000; // How fast the LCD's updates [ms]
-const unsigned int Max_LCD_Idle_Time = 5000; // Max time that the LCD can be idle before it turns off [ms]
+const unsigned int Max_LCD_Idle_Time = 32000; // Max time that the LCD can be idle before it turns off [ms]
 
 // Buzzer Tones 
 const unsigned int Buzzer_Frequency = 100; // Frequency of the buzzer tone [Hz]
@@ -189,8 +189,8 @@ bool Active = false; // Indicates whether the on or off button was pressed and a
 bool LCD_Active = false; // Indicates whether to turn off or on the backlight on the LCD's
 
 // IR SENSOR  
-IRrecv irrecv(IR_RECEIVER); // Creates a new IR Receiver 
-decode_results results; // Creates a new decode results object
+//IRrecv irrecv(IR_RECEIVER); // Creates a new IR Receiver 
+//decode_results results; // Creates a new decode results object
 
 // Auto Fan States 
 //bool Auto_Fan_State = false; // Indicates whether the auto fan is on or off 
@@ -269,7 +269,7 @@ void Set_Fan_Speed(unsigned int Speed){
 void Set_LED(unsigned int LED_NUMBER, unsigned int BRIGHTNESS){
 
     // Calculates the Duty cycle for the pin (Simulated PWM)
-    const double PWM_Frequency = 2040; 
+    const double PWM_Frequency = 100; // Changes the period of the sine wave
     double On_Duty_Cycle = PWM_Frequency - (((255.0 - (double)BRIGHTNESS) / 255) * PWM_Frequency); // Calculates the on duty cycle of the PWM signal
     double Off_Duty_Cycle = PWM_Frequency - On_Duty_Cycle; // Calculates the off duty cycle of the PWM signal
 
@@ -296,7 +296,7 @@ void Set_LED(unsigned int LED_NUMBER, unsigned int BRIGHTNESS){
 // Reads the data from the temperature sensor [LM35] [C]
 float Get_Temperature(){
     // Voltage [0 - 10mv]
-    float Voltage = analogRead(TEMPERATURE_CONTROL); 
+    float Voltage = analogRead(TEMPERATURE_SENSOR); 
 
     // Checks whether we are in a virtual environment or not 
     #if VIRTUAL_ENVIRONMENT
@@ -321,18 +321,18 @@ float Get_Humidity(){
         return (Voltage / 876.0) * 100; 
     #else 
         // In a real environment (Unknown sensor)
-        Serial.println("Unknown humidity sensor! Please refer to pinout"); 
+        //Serial.println("Unknown humidity sensor! Please refer to pinout"); 
         return Voltage; 
     #endif
 }
 
-// Gets the set fan speed on the potentiometer and returns it in a range of [0 - 255]
+// Gets the set fan speed on the potentiometer and returns it in a range of [0 - 100]
 int Get_Set_Fan_Speed(){
     // Gets the potentiometer
     float Voltage = analogRead(FAN_SPEED_CONTROL);
 
     // Converts the potentiometer voltage to a speed value within range 
-    float Fan_Speed = (Voltage/1024.0) * 255.0;
+    float Fan_Speed = (Voltage/1024.0) * 100.0;
     return (int)Fan_Speed; 
 }
 
@@ -479,7 +479,7 @@ void Display_Fan_Speed_Top(){
         CONTROL_LCD.print("Set Speed: ");
         CONTROL_LCD.print(Fan_Speed);
 
-        Display_Changed = true; // Sets the display changed to true as we have just changed the display
+        //Display_Changed = true; // Sets the display changed to true as we have just changed the display
 
     #endif
 }
@@ -523,7 +523,7 @@ void Display_Set_Temperature_Top(){
         CONTROL_LCD.print("Set Temp: ");
         CONTROL_LCD.print(Set_Temperature);
 
-        Display_Changed = true; // Sets the display changed to true as we have just changed the display
+        //Display_Changed = true; // Sets the display changed to true as we have just changed the display
     #endif
 
 }
@@ -559,12 +559,13 @@ void Display_Bottom_Basic(){
             Display_Changed = false; // Sets the display changed to false as we have just cleared the display
         }   
 
+        // HERE
         // Displays the current system mode and fan state 
-        CONTROL_LCD.setCursor(0,3); // Sets the cursor to the top left of the display
+        CONTROL_LCD.setCursor(0,2); // Sets the cursor to the top left of the display
         CONTROL_LCD.print("Temperature: ");
         CONTROL_LCD.print(Temperature);
 
-        CONTROL_LCD.setCursor(0,4); // Sets the cursor to the bottom left of the display
+        CONTROL_LCD.setCursor(0,3); // Sets the cursor to the bottom left of the display
         CONTROL_LCD.print("Humidity: ");
         CONTROL_LCD.print(Humidity);
     #endif
@@ -749,12 +750,12 @@ void Update_System_On_Input(){
 
         // --- [IR RECEIVER] --- 
         // Checks if the IR receiver has received a signal 
-        if(irrecv.decode(&results)){
-            unsigned int value = results.value; // Gets the value of the IR signal 
+        if(IrReceiver.decode()){
+            auto Data = IrReceiver.decodedIRData.decodedRawData; 
             Serial.print("IR Signal Received: "); // Prints the IR signal value
-            Serial.println(value);
+            Serial.println(Data,HEX);
             Serial.println("---------------------------");
-            rirecv.resume(); // Resumes the IR receiver
+            IrReceiver.resume(); // Resumes the IR receiver
         }
 
         // --- [BUTTONS] --- 
@@ -952,6 +953,8 @@ void Update_System_Components(){
         // Sets the fan speed to the set fan speed 
         Set_Fan_Speed(Fan_Speed);
         return; 
+    }else{
+      Set_Fan_Speed(0); 
     }
 }
 
@@ -976,9 +979,7 @@ void Update_Neo_Pixel(){
 
     Neo_Pixel_State = true; // Indicates that the Neo_Pixel is on
 
-    // Sets the Neo_Pixel max brightness 
-    NEO_PIXEL.setBrightness(Max_Neo_Pixel_Brightness);
-
+    
     // Gets the individual colors in the array pattern 
     int R = Neo_Pixel_Color_Pattern[Pixel_Pattern_Index][0];
     int G = Neo_Pixel_Color_Pattern[Pixel_Pattern_Index][1];
@@ -986,6 +987,9 @@ void Update_Neo_Pixel(){
 
     // Sets the Neo_Pixel color 
     NEO_PIXEL.setPixelColor(Pixel_Light_Index, R, G, B);
+    // Sets the Neo_Pixel max brightness 
+    NEO_PIXEL.setBrightness(Max_Neo_Pixel_Brightness);
+
     NEO_PIXEL.show();
 
     // Increments the pixel light index 
@@ -1021,7 +1025,7 @@ void setup(){
     pinMode(ON_BUTTON,INPUT); // Sets the ON button as an input
     pinMode(OFF_BUTTON,INPUT); // Sets the OFF button as an input
     pinMode(AUTO_BUTTON,INPUT); // Sets the AUTO button as an input
-    irrecv.enableIRIn(); // Starts the IR receiver
+    IrReceiver.begin(IR_RECEIVER);
 
     // ANALOG
     pinMode(TEMPERATURE_SENSOR,INPUT); // Sets the temperature sensor as an input 
@@ -1082,11 +1086,45 @@ void setup(){
 
 
 // System Loop 
-void loop(){
+void loop(){  
+
+    // Debugging 
+    #if VIRTUAL_ENVIRONMENT 
+      Serial.print("Control Status: "); 
+      Serial.println(Control_Display_Changed); 
+      Serial.print("Status Display: "); 
+      Serial.println(Status_Display_Changed); 
+    #else
+      Serial.println("CURRENT SYSTEM STATUS:");
+      Serial.print("System Mode: "); 
+      Serial.println(System_Mode); 
+      Serial.print("System Status: ");  
+      Serial.println(Active); 
+      Serial.print("LCD Status: "); 
+      Serial.println(LCD_Active,DEC); 
+      Serial.print("Auto_Fan_Speed: "); 
+      Serial.println(Auto_Fan_Speed); 
+      Serial.print("Fan_Speed: "); 
+      Serial.println(Fan_Speed); 
+      Serial.print("Fan_State: ");
+      Serial.println(Fan_State);  
+      Serial.print("Set Temperature: "); 
+      Serial.println(Set_Temperature); 
+      Serial.print("Env_Temp: "); 
+      Serial.println(Temperature); 
+      Serial.print("Env_Humid:");
+      Serial.println(Humidity); 
+      Serial.println("----------------------------------"); 
+    
+      //Serial.print("Display Status: "); 
+      //Serial.println(Display_Changed); 
+     #endif  
+
+      
     // Updates the environment data on the system 
     Update_Environment_Data();
 
-    // Displays the bottom basic Data 
+    // Displays the bottom basic Data  
     Display_Bottom_Basic(); 
 
     // Updates the system based on user input 
