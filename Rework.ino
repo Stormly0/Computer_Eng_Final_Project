@@ -43,7 +43,7 @@
 #define TEMPERATURE_CONTROL A0
 
 // Neo Pixel Pin 
-#define NEO_PIXEL_PIN 8 
+#define NEO_PIXEL_PIN 10 
 
 // LCD ADDRESSES 
 
@@ -585,19 +585,19 @@ void Display_Bottom_Basic(){
         // Virtual environment display control 
 
         // Checks if the display has changed 
-        if(!Control_Display_Changed){
-            CONTROL_LCD.clear(); // Clears the top display 
-            Control_Display_Changed = false; // Sets the display changed to false as we have just cleared the display
+        if(!Status_Display_Changed){
+            STATUS_LCD.clear(); // Clears the top display 
+            Status_Display_Changed = false; // Sets the display changed to false as we have just cleared the display
         }
 
         // Displays the current system mode and fan state 
-        CONTROL_LCD.setCursor(0,0); // Sets the cursor to the top left of the display 
-        CONTROL_LCD.print("Temp: ");
-        CONTROL_LCD.print(Temperature);
+        STATUS_LCD.setCursor(0,0); // Sets the cursor to the top left of the display 
+        STATUS_LCD.print("Temp: ");
+        STATUS_LCD.print(Temperature);
 
-        CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
-        CONTROL_LCD.print("Humidity: ");
-        CONTROL_LCD.print(Humidity);
+        STATUS_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
+        STATUS_LCD.print("Humidity: ");
+        STATUS_LCD.print(Humidity);
     #else
         // Real Environment 
 
@@ -745,6 +745,8 @@ void Update_System_On_Input(){
 
         // Checks if the user wants to change the fan speed 
         if(Active && (Get_Set_Fan_Speed() != Fan_Speed)){
+            Serial.println("Fan speed has changed!");
+
             // Indicates that the display needs to be cleared 
             Control_Display_Changed = true;
 
@@ -767,6 +769,8 @@ void Update_System_On_Input(){
 
         // Checks if the user wants to change the set temperature 
         if(Active && (Get_Set_Temperature() != Set_Temperature)){
+            Serial.println("Set temperature has changed!");
+
             // Indicates that the display needs to be cleared 
             Control_Display_Changed = true;
 
@@ -860,6 +864,7 @@ void Update_System_On_Input(){
 
         // Checks if the user wants to change the fan speed
         if(Active && (Get_Set_Fan_Speed() != Fan_Speed)){
+            Serial.println("Fan Speed Potentiometer was changed!");
             // Indicates that the display needs to be cleared 
             Display_Changed = true;
 
@@ -883,6 +888,7 @@ void Update_System_On_Input(){
 
         // Checks if the user wants to change the set temperature
         if(Active && (Get_Set_Temperature() != Set_Temperature)){
+            Serial.println("Set Temperature Potentiometer was changed!");
             // Indicates that the display needs to be cleared 
             Display_Changed = true;
 
@@ -1000,12 +1006,13 @@ void Update_System_Components(){
 // Displays the NeoPixel lights using the provided pattern 
 void Update_Neo_Pixel(){
     // Checks if the fan is off and the neopixel is on  
-    if(!Fan_State || !Active){
+    if(!Active){
         // Only turns it off if the neopixel is on 
         if(Neo_Pixel_State){
             // Turns off the Neo_Pixel 
             NEO_PIXEL.clear(); 
             NEO_PIXEL.show();
+            Neo_Pixel_State = false;
         }
         return; 
     }
@@ -1014,6 +1021,8 @@ void Update_Neo_Pixel(){
     if(!Neo_Pixel_Timer.Check_Time_Millis(Neo_Pixel_Delay_Between_Lights)){
         return; // Returns as the delay time has not passed 
     }
+
+    Neo_Pixel_State = true; // Indicates that the Neo_Pixel is on
 
     // Sets the Neo_Pixel max brightness 
     NEO_PIXEL.setBrightness(Max_Neo_Pixel_Brightness);
@@ -1124,6 +1133,9 @@ void setup(){
 void loop(){
     // Updates the environment data on the system 
     Update_Environment_Data();
+
+    // Displays the bottom basic Data 
+    Display_Bottom_Basic(); 
 
     // Updates the system based on user input 
     Update_System_On_Input(); 
