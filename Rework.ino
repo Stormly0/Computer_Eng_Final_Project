@@ -466,7 +466,7 @@ void Display_Top_Basic(){
         // Virtual environment display control 
 
         // Checks if the display has changed 
-        if(!Control_Display_Changed){
+        if(Control_Display_Changed){
             CONTROL_LCD.clear(); // Clears the top display 
             Control_Display_Changed = false; // Sets the display changed to false as we have just cleared the display
         }
@@ -507,7 +507,7 @@ void Display_Fan_Speed_Top(){
         // Virtual environment display control 
 
         // Checks if the display has changed 
-        if(!Control_Display_Changed){
+        if(Control_Display_Changed){
             CONTROL_LCD.clear(); // Clears the top display 
             Control_Display_Changed = false; // Sets the display changed to false as we have just cleared the display
         }
@@ -551,7 +551,7 @@ void Display_Set_Temperature_Top(){
         // Virtual environment display control 
 
         // Checks if the display has changed 
-        if(!Control_Display_Changed){
+        if(Control_Display_Changed){
             CONTROL_LCD.clear(); // Clears the top display 
             Control_Display_Changed = false; // Sets the display changed to false as we have just cleared the display
         }
