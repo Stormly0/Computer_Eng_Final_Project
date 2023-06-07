@@ -1,6 +1,6 @@
 //Imports 
 #include <Adafruit_NeoPixel.h>
-#include <LiquidCrystal_I2C/LiquidCrystal_I2C.h>
+#include <LiquidCrystal_I2C.h>
 #include <IRremote.hpp>
 
 // -- Important Rules 
@@ -11,7 +11,7 @@
 // Static variables cannot be initialized in a class unless the inline keyword is present 
 
 // Defines whether the system is in a virtual environment or not 
-#define VIRTUAL_ENVIRONMENT false
+#define VIRTUAL_ENVIRONMENT true
 
 // Pin State Variables 
  

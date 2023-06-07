@@ -19,7 +19,9 @@
                 "USBCON"
             ],
             "intelliSenseMode": "gcc-x64",
-            "compilerPath": "C:/msys64/mingw64/bin/gcc.exe"
+            "compilerPath": "C:/msys64/mingw64/bin/gcc.exe",
+            "cppStandard": "c++17",
+            "cStandard": "c11"
 
         }   
     ],
