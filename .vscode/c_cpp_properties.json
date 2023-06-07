@@ -3,14 +3,25 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "C:/Users/sam62/AppData/Local/Arduino15/packages/arduino/tools/**",
+                "C:/Users/sam62/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.8.6/**",
+                "C:/Users/sam62/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.8.6/cores/arduino/**",
+                "C:/Users/sam62/OneDrive/Documents/Arduino/libraries/**"
+            ],
+            "forcedInclude": [
+                "C:/Users/sam62/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.8.6/cores/arduino/Arduino.h"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
-            ]
-        }
+                "_UNICODE",
+                "USBCON"
+            ],
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "C:/msys64/mingw64/bin/gcc.exe"
+
+        }   
     ],
     "version": 4
 }

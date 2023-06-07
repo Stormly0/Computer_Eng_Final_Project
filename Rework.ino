@@ -1,6 +1,6 @@
 //Imports 
 #include <Adafruit_NeoPixel.h>
-#include <LiquidCrystal_I2C.h>
+#include <LiquidCrystal_I2C/LiquidCrystal_I2C.h>
 #include <IRremote.hpp>
 
 // -- Important Rules 
@@ -11,10 +11,10 @@
 // Static variables cannot be initialized in a class unless the inline keyword is present 
 
 // Defines whether the system is in a virtual environment or not 
-#define VIRTUAL_ENVIRONMENT true 
+#define VIRTUAL_ENVIRONMENT false
 
 // Pin State Variables 
-
+ 
 // Buttons
 #define AUTO_BUTTON 8
 #define OFF_BUTTON 7
@@ -61,6 +61,8 @@
 #else
     LiquidCrystal_I2C CONTROL_LCD(CONTROL_LCD_ADDRESS, 16, 2); // System status LCD where you can see the modes and the current status of the system
 #endif
+
+
 
 Adafruit_NeoPixel NEO_PIXEL(24, NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ800); // RGB LED
 
