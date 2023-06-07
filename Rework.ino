@@ -221,6 +221,7 @@ const unsigned int Neo_Pixel_Delay_Between_Lights = 500; // Delay between each l
 const unsigned int Max_LED_Brightness = 100; // Max Brightness of the LEDs [0 - 255]
 
 // LCD parameters
+const unsigned int LCD_Refresh_Rate = 1000; // How fast the LCD's updates [ms]
 const unsigned int Max_LCD_Idle_Time = 5000; // Max time that the LCD can be idle before it turns off [ms]
 
 // Buzzer Tones 
@@ -288,6 +289,7 @@ Timer Neo_Pixel_Timer;
 Timer PWM_Timer;
 // LCD Timer 
 Timer LCD_Timer; 
+Timer LCD_Refresh_Timer;
 // PWM emulation Timer 
 Timer LED_TIMER; 
 
@@ -675,13 +677,13 @@ void Update_System_On_Input(){
 
         // --- [IR RECEIVER] --- 
         // Checks if the IR receiver has received a signal 
-        if(irrecv.decode(&results)){
-            unsigned int value = results.value; // Gets the value of the IR signal 
-            Serial.print("IR Signal Received: "); // Prints the IR signal value
-            Serial.println(value);
-            Serial.println("---------------------------");
-            irrecv.resume(); // Resumes the IR receiver
-        }
+        // if(irrecv.decode(&results)){
+        //     unsigned int value = results.value; // Gets the value of the IR signal 
+        //     Serial.print("IR Signal Received: "); // Prints the IR signal value
+        //     Serial.println(value);
+        //     Serial.println("---------------------------");
+        //     irrecv.resume(); // Resumes the IR receiver
+        // }
 
 
         // --- [BUTTONS] --- 
@@ -758,6 +760,9 @@ void Update_System_On_Input(){
 
             // Gets the new fan speed 
             Fan_Speed = Get_Set_Fan_Speed();
+
+            // Displays the new fan speed
+            Display_Fan_Speed_Top();
         }
 
         // Checks if the user wants to change the set temperature 
@@ -777,6 +782,10 @@ void Update_System_On_Input(){
 
             // Gets the new set temperature 
             Set_Temperature = Get_Set_Temperature();
+
+            // Displays the new set temperature 
+            Display_Set_Temperature_Top();
+
         }
 
     #else
@@ -866,6 +875,10 @@ void Update_System_On_Input(){
 
             // Gets the new fan speed 
             Fan_Speed = Get_Set_Fan_Speed();
+
+            // Displays the new fan speed 
+            Display_Fan_Speed_Top(); 
+
         }
 
         // Checks if the user wants to change the set temperature
@@ -885,6 +898,10 @@ void Update_System_On_Input(){
 
             // Gets the new set temperature 
             Set_Temperature = Get_Set_Temperature();
+
+            // Displays the new set temperature 
+            Display_Set_Temperature_Top();
+
         }
     #endif
 
@@ -942,6 +959,13 @@ void Update_System_Components(){
         Set_LED(GREEN_LED,Max_LED_Brightness); // Green LED is on
     }
 
+    // --- [DISPLAY]
+
+    // Displays the basic system information 
+    if(LCD_Refresh_Timer.Check_Time_Millis(LCD_Refresh_Rate)){
+        Display_Top_Basic(); 
+    }
+    
 
     // --- [AUTO MODE] --- 
 
