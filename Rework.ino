@@ -150,66 +150,66 @@ class Timer{
 };
 
 // A event handler that handles all function calls and events that happen in the system through a callback system 
-class Event_Handler{
+// class Event_Handler{
     
-    private: 
-        // Private Variables 
-        inline static unsigned long Void_Event_Calls = 0; // Indicates how many events were called 
-        inline static unsigned long Typed_Event_Calls = 0; // Indicates how many events were called with an argument
-        inline static unsigned long Total_Event_Calls = 0; // Total event calls that have occured
+//     private: 
+//         // Private Variables 
+//         inline static unsigned long Void_Event_Calls = 0; // Indicates how many events were called 
+//         inline static unsigned long Typed_Event_Calls = 0; // Indicates how many events were called with an argument
+//         inline static unsigned long Total_Event_Calls = 0; // Total event calls that have occured
 
-    public: 
-        // Public Functions 
+//     public: 
+//         // Public Functions 
         
-        // Calls the function given 
-        void Call(void (*Function)(void)){
-            Function(); // Calls the function 
-            this->Void_Event_Calls++; // Increments the number of void events that have occured
-            this->Total_Event_Calls++; // Increments the total number of events that have occured
-        }
+//         // Calls the function given 
+//         void Call(void (*Function)(void)){
+//             Function(); // Calls the function 
+//             this->Void_Event_Calls++; // Increments the number of void events that have occured
+//             this->Total_Event_Calls++; // Increments the total number of events that have occured
+//         }
 
-        // Calls the function given a parameters
+//         // Calls the function given a parameters
         
-        template<typename String> void Call(void (*Function)(void), String Name){
-            Function(); // Calls the function 
-            this->Void_Event_Calls++; // Increments the number of void events that have occured
-            // Outputs the name of the function 
-            Serial.print("Event: "); 
-            Serial.print(Name);
-            Serial.println(" Called");
-            this->Total_Event_Calls++; // Increments the total number of events that have occured
-        }
+//         template<typename S> void Call(void (*Function)(void), S Name){
+//             Function(); // Calls the function 
+//             this->Void_Event_Calls++; // Increments the number of void events that have occured
+//             // Outputs the name of the function 
+//             Serial.print("Event: "); 
+//             Serial.print(Name);
+//             Serial.println(" Called");
+//             this->Total_Event_Calls++; // Increments the total number of events that have occured
+//         }
 
-        // Calls the function given a parameter
-        template<typename ParamNum, typename String>void Call(void (*Function)(A Number), String Name){
-            Function(Number); // Calls the function 
+//         // Calls the function given a parameter
+//         template<typename ParamNum, typename St>void Call(void (*Function)(ParamNum Number), St Name){
+//             Function(Number); // Calls the function 
 
-            Serial.print("Event: "); 
-            Serial.print(Name);
-            Serial.println(" Called");
+//             Serial.print("Event: "); 
+//             Serial.print(Name);
+//             Serial.println(" Called");
 
-            this->Typed_Event_Calls++; // Increments the number of typed events that have occured
-            this->Total_Event_Calls++; // Increments the total number of events that have occured
-        }
+//             this->Typed_Event_Calls++; // Increments the number of typed events that have occured
+//             this->Total_Event_Calls++; // Increments the total number of events that have occured
+//         }
 
-        // Calls the function given a parameter
+//         // Calls the function given a parameter
 
 
-        // Gets the number of void events that have occured 
-        unsigned long Get_Void_Event_Calls(){
-            return this->Void_Event_Calls;
-        }
+//         // Gets the number of void events that have occured 
+//         unsigned long Get_Void_Event_Calls(){
+//             return this->Void_Event_Calls;
+//         }
 
-        // Gets the number of typed events that have occured
-        unsigned long Get_Typed_Event_Calls(){
-            return this->Typed_Event_Calls;
-        }
+//         // Gets the number of typed events that have occured
+//         unsigned long Get_Typed_Event_Calls(){
+//             return this->Typed_Event_Calls;
+//         }
 
-        // Gets the total number of events that have occured
-        unsigned long Get_Total_Event_Calls(){
-            return this->Total_Event_Calls;
-        }
-};
+//         // Gets the total number of events that have occured
+//         unsigned long Get_Total_Event_Calls(){
+//             return this->Total_Event_Calls;
+//         }
+// };
 
 // ------------ [Variables] ------------ \\
 
@@ -472,7 +472,7 @@ void Display_Top_Basic(){
         // Displays the current system mode and fan state 
         CONTROL_LCD.setCursor(0,0); // Sets the cursor to the top left of the display 
         CONTROL_LCD.print("Mode: ");
-        CONTROL_LCD.print(Fan_Mode);
+        CONTROL_LCD.print(System_Mode);
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
         CONTROL_LCD.print(" State: ");
@@ -489,7 +489,7 @@ void Display_Top_Basic(){
         // Displays the current system mode and fan state 
         CONTROL_LCD.setCursor(0,0); // Sets the cursor to the top left of the display
         CONTROL_LCD.print("Mode: ");
-        CONTROL_LCD.print(Fan_Mode);
+        CONTROL_LCD.print(System_Mode);
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
         CONTROL_LCD.print(" State: ");
@@ -697,7 +697,7 @@ void Update_System_On_Input(){
             LCD_Active = true; 
 
             // Checks if the system is in auto mode 
-            if(System_Mode == AUTO){
+            if(System_Mode == "Auto"){
                 // Sets the system mode to manual 
                 System_Mode = "Manual";
             }else{
@@ -805,7 +805,7 @@ void Update_System_On_Input(){
             LCD_Active = true; 
 
             // Checks if the system is in auto mode 
-            if(System_Mode == AUTO){
+            if(System_Mode == "Auto"){
                 // Sets the system mode to manual 
                 System_Mode = "Manual";
             }else{
@@ -980,8 +980,8 @@ void Update_Neo_Pixel(){
         // Only turns it off if the neopixel is on 
         if(Neo_Pixel_State){
             // Turns off the Neo_Pixel 
-            Neo_Pixel.clear(); 
-            Neo_Pixel.show();
+            NEO_PIXEL.clear(); 
+            NEO_PIXEL.show();
         }
         return; 
     }
@@ -992,7 +992,7 @@ void Update_Neo_Pixel(){
     }
 
     // Sets the Neo_Pixel max brightness 
-    Neo_Pixel.setBrightness(Max_Neo_Pixel_Brightness);
+    NEO_PIXEL.setBrightness(Max_Neo_Pixel_Brightness);
 
     // Gets the individual colors in the array pattern 
     int R = Neo_Pixel_Color_Pattern[Pixel_Pattern_Index][0];
@@ -1000,8 +1000,8 @@ void Update_Neo_Pixel(){
     int B = Neo_Pixel_Color_Pattern[Pixel_Pattern_Index][2];
 
     // Sets the Neo_Pixel color 
-    Neo_Pixel.setPixelColor(Pixel_Light_Index, R, G, B);
-    Neo_Pixel.show();
+    NEO_PIXEL.setPixelColor(Pixel_Light_Index, R, G, B);
+    NEO_PIXEL.show();
 
     // Increments the pixel light index 
     Pixel_Light_Index++;
