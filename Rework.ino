@@ -517,8 +517,11 @@ void Display_Fan_Speed_Top(){
         CONTROL_LCD.print("Set Fan Speed"); 
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
-        CONTROL_LCD.print(" Set Speed: ");
+        CONTROL_LCD.print("Set Speed: ");
         CONTROL_LCD.print(Fan_Speed);
+
+        Control_Display_Changed = true; // Sets the display changed to true as we have just changed the display
+
     #else
         // Real environment display control 
 
@@ -533,8 +536,11 @@ void Display_Fan_Speed_Top(){
         CONTROL_LCD.print("Set Fan Speed"); 
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
-        CONTROL_LCD.print(" Set Speed: ");
+        CONTROL_LCD.print("Set Speed: ");
         CONTROL_LCD.print(Fan_Speed);
+
+        Display_Changed = true; // Sets the display changed to true as we have just changed the display
+
     #endif
 }
 
@@ -555,8 +561,11 @@ void Display_Set_Temperature_Top(){
         CONTROL_LCD.print("Set Temperature"); 
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
-        CONTROL_LCD.print(" Set Temp: ");
+        CONTROL_LCD.print("Set Temp: ");
         CONTROL_LCD.print(Set_Temperature);
+
+        Control_Display_Changed = true; // Sets the display changed to true as we have just changed the display
+
     #else
         // Real environment display control 
 
@@ -571,9 +580,12 @@ void Display_Set_Temperature_Top(){
         CONTROL_LCD.print("Set Temperature"); 
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
-        CONTROL_LCD.print(" Set Temp: ");
+        CONTROL_LCD.print("Set Temp: ");
         CONTROL_LCD.print(Set_Temperature);
+
+        Display_Changed = true; // Sets the display changed to true as we have just changed the display
     #endif
+
 }
 
 // Displays the bottom data on the LCD [Temperature | Humidity]
