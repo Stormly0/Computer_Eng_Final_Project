@@ -279,7 +279,7 @@ unsigned int Pixel_Pattern_Size = 0; // Size of the color pattern array
 // Timers 
 
 // System Timer 
-Timer System_Timer; 
+//Timer System_Timer; 
 // Buzzer Timer 
 Timer Buzzer_Timer; 
 // NeoPixel Timer 
@@ -295,7 +295,7 @@ Timer LED_TIMER;
 bool Button_State_Cache[3] = {false,false,false}; // Stores the previous state of the buttons
 
 // Display states 
-#ifdef VIRTUAL_ENVIRONMENT 
+#if VIRTUAL_ENVIRONMENT 
     bool Control_Display_Changed = false; // Indicates whether the control display has changed 
     bool Status_Display_Changed = false; // Indicates whether the status display has changed
 #else 
@@ -358,7 +358,7 @@ float Get_Temperature(){
     float Voltage = analogRead(TEMPERATURE_CONTROL); 
 
     // Checks whether we are in a virtual environment or not 
-    #ifdef VIRTUAL_ENVIRONMENT
+    #if VIRTUAL_ENVIRONMENT
         // Virtual environment (TPM36)
         return (Voltage * 5) / 1024.0; // Returns the temperature in celsius
     #else
@@ -373,7 +373,7 @@ float Get_Humidity(){
     float Voltage = analogRead(HUMIDITY_SENSOR);
 
     // Checks whether we are in a virtual environment or not 
-    #ifdef VIRTUAL_ENVIRONMENT
+    #if VIRTUAL_ENVIRONMENT
         // Virtual environment (Soil Moisture Sensor)
         // Max 876
         return (Voltage / 876.0) * 100; 
@@ -460,7 +460,7 @@ void Display_Top_Basic(){
     // Displays the basic information such as fan mode and fan state 
 
     // Checks whether we are in a virtual environment or a real environment 
-    #ifdef VIRTUAL_ENVIRONMENT 
+    #if VIRTUAL_ENVIRONMENT 
         // Virtual environment display control 
 
         // Checks if the display has changed 
@@ -475,7 +475,7 @@ void Display_Top_Basic(){
         CONTROL_LCD.print(System_Mode);
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
-        CONTROL_LCD.print(" State: ");
+        CONTROL_LCD.print("State: ");
         CONTROL_LCD.print(Fan_State);
     #else
         // Real Environment 
@@ -492,7 +492,7 @@ void Display_Top_Basic(){
         CONTROL_LCD.print(System_Mode);
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
-        CONTROL_LCD.print(" State: ");
+        CONTROL_LCD.print("State: ");
         CONTROL_LCD.print(Fan_State);
     #endif
     
@@ -501,7 +501,7 @@ void Display_Top_Basic(){
 // Displays the top data of the current set fan speed  
 void Display_Fan_Speed_Top(){
     // Checks if we are in the virtual environment or not 
-    #ifdef VIRTUAL_ENVIRONMENT
+    #if VIRTUAL_ENVIRONMENT
         // Virtual environment display control 
 
         // Checks if the display has changed 
@@ -516,7 +516,7 @@ void Display_Fan_Speed_Top(){
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
         CONTROL_LCD.print(" Set Speed: ");
-        CONTROL_LCD.print(Set_Fan_Speed);
+        CONTROL_LCD.print(Fan_Speed);
     #else
         // Real environment display control 
 
@@ -532,14 +532,14 @@ void Display_Fan_Speed_Top(){
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
         CONTROL_LCD.print(" Set Speed: ");
-        CONTROL_LCD.print(Set_Fan_Speed);
+        CONTROL_LCD.print(Fan_Speed);
     #endif
 }
 
 // Displays the set temperature on the LCD 
 void Display_Set_Temperature_Top(){
     // Checks if we are in the virtual environment or not 
-    #ifdef VIRTUAL_ENVIRONMENT
+    #if VIRTUAL_ENVIRONMENT
         // Virtual environment display control 
 
         // Checks if the display has changed 
@@ -579,7 +579,7 @@ void Display_Bottom_Basic(){
     // Displays the basic information such as temperature and humidity 
 
     // Checks whether we are in a virtual environment or a real environment 
-    #ifdef VIRTUAL_ENVIRONMENT 
+    #if VIRTUAL_ENVIRONMENT 
         // Virtual environment display control 
 
         // Checks if the display has changed 
@@ -594,7 +594,7 @@ void Display_Bottom_Basic(){
         CONTROL_LCD.print(Temperature);
 
         CONTROL_LCD.setCursor(0,1); // Sets the cursor to the bottom left of the display
-        CONTROL_LCD.print(" Humidity: ");
+        CONTROL_LCD.print("Humidity: ");
         CONTROL_LCD.print(Humidity);
     #else
         // Real Environment 
@@ -611,7 +611,7 @@ void Display_Bottom_Basic(){
         CONTROL_LCD.print(Temperature);
 
         CONTROL_LCD.setCursor(0,4); // Sets the cursor to the bottom left of the display
-        CONTROL_LCD.print(" Humidity: ");
+        CONTROL_LCD.print("Humidity: ");
         CONTROL_LCD.print(Humidity);
     #endif
     
@@ -633,7 +633,7 @@ void Update_Environment_Data(){
     // Updates the temperature and humidity 
     if(Temperature_Changed){
         // Checks whether we are in a virtual environment or a real environment 
-        #ifdef VIRTUAL_ENVIRONMENT 
+        #if VIRTUAL_ENVIRONMENT 
             // Virtual environment display control 
 
             // Indicates the the LCD needs to be cleared
@@ -651,7 +651,7 @@ void Update_Environment_Data(){
 
     if(Humidity_Changed){
         // Checks whether we are in a virtual environment or a real environment
-        #ifdef VIRTUAL_ENVIRONMENT 
+        #if VIRTUAL_ENVIRONMENT 
             // Virtual environment display control 
 
             // Indicates the the LCD needs to be cleared
@@ -670,17 +670,17 @@ void Update_Environment_Data(){
 // Updates the system based on the user input 
 void Update_System_On_Input(){
     // Checks if we are in a virtual environment or a real environment
-    #ifdef VIRTUAL_ENVIRONMENT 
+    #if VIRTUAL_ENVIRONMENT 
         // Virtual environment 
 
         // --- [IR RECEIVER] --- \\
         // Checks if the IR receiver has received a signal 
-        if(iirecv.decode(&results)){
+        if(irrecv.decode(&results)){
             unsigned int value = results.value; // Gets the value of the IR signal 
             Serial.print("IR Signal Received: "); // Prints the IR signal value
             Serial.println(value);
             Serial.println("---------------------------");
-            iirecv.resume(); // Resumes the IR receiver
+            irrecv.resume(); // Resumes the IR receiver
         }
 
 
@@ -784,12 +784,12 @@ void Update_System_On_Input(){
 
         // --- [IR RECEIVER] --- \\
         // Checks if the IR receiver has received a signal 
-        if(iirecv.decode(&results)){
+        if(irrecv.decode(&results)){
             unsigned int value = results.value; // Gets the value of the IR signal 
             Serial.print("IR Signal Received: "); // Prints the IR signal value
             Serial.println(value);
             Serial.println("---------------------------");
-            iirecv.resume(); // Resumes the IR receiver
+            rirecv.resume(); // Resumes the IR receiver
         }
 
         // --- [BUTTONS] --- \\
@@ -897,7 +897,7 @@ void Update_System_Components(){
     if(LCD_Active){ // LCD active
 
         // Checks current runtime environment 
-        #ifdef VIRTUAL_ENVIRONMENT 
+        #if VIRTUAL_ENVIRONMENT 
             // Virtual environment 
 
             // Turns the LCD on 
@@ -949,7 +949,7 @@ void Update_System_Components(){
     if(Fan_State && System_Mode == "Auto"){
         
         // Checks if the current temperature is greater than the set temperature
-        if(Current_Temperature > Set_Temperature){
+        if(Get_Temperature() > Set_Temperature){
             // Turns on the fan to cool down the room 
             
             // Calculates the auto fan speed 
@@ -1064,7 +1064,7 @@ void setup(){
 
     // Starts the LCD displays 
     // Checks current execution environment 
-    #ifdef VIRTUAL_ENVIRONMENT
+    #if VIRTUAL_ENVIRONMENT
         // Virtual environment 
         CONTROL_LCD.init(); 
         STATUS_LCD.init();
