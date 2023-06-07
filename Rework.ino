@@ -361,6 +361,7 @@ float Get_Temperature(){
 
     // Checks whether we are in a virtual environment or not 
     #if VIRTUAL_ENVIRONMENT
+        Serial.println(Voltage); 
         // Virtual environment (TPM36)
         return (Voltage * 5) / 1024.0; // Returns the temperature in celsius
     #else
