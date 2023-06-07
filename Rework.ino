@@ -64,7 +64,7 @@
 
 Adafruit_NeoPixel NEO_PIXEL(24, NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ800); // RGB LED
 
-// ------------ [CLASSES] ------------ \\
+// ------------ [CLASSES] ------------ 
 
 // A timer that allows for independent timing of different events 
 class Timer{
@@ -211,7 +211,7 @@ class Timer{
 //         }
 // };
 
-// ------------ [Variables] ------------ \\
+// ------------ [Variables] ------------ 
 
 // --- [System Configurations] --- \\ 
 
@@ -239,7 +239,7 @@ const int Neo_Pixel_Color_Pattern[][3] = {
     {255,255,255}, // White
 };
 
-// --- [System Status Variables] --- \\ 
+// --- [System Status Variables] ---  
 String System_Mode = "Manual"; // Mode that the system is currently in [Auto,Manual]
 
 // System State 
@@ -306,7 +306,7 @@ bool Display_Active = false; // Indicates whether the display should be active o
 
 // Functions 
 
-// ------------ [SETTERS] ------------ \\
+// ------------ [SETTERS] ------------ 
 
 // Controls the Motor Speed [0 - 255]
 void Set_Fan_Speed(unsigned int Speed){
@@ -350,7 +350,7 @@ void Set_LED(unsigned int LED_NUMBER, unsigned int BRIGHTNESS){
 }
 
 
-// ------------ [GETTERS] ------------ \\
+// ------------ [GETTERS] ------------ 
 
 // Reads the data from the temperature sensor [LM35] [C]
 float Get_Temperature(){
@@ -405,7 +405,7 @@ int Get_Set_Temperature(){
 }
 
 
-// ------------ [UTILITIES] ------------ \\
+// ------------ [UTILITIES] ------------ 
 
 // Buzzes the buzzer for a certain duration 
 void Buzz(){
@@ -453,7 +453,7 @@ bool Check_Button(int Button){
     return Button_Registered;
 }
 
-// ------------ [DISPLAYS] ------------ \\ 
+// ------------ [DISPLAYS] ------------  
 
 // Displays the top data on the LCD
 void Display_Top_Basic(){
@@ -617,7 +617,7 @@ void Display_Bottom_Basic(){
     
 }
 
-// ------------ [SYSTEM] ------------ \\
+// ------------ [SYSTEM] ------------ 
 
 // Updates the temperature and humidity data 
 void Update_Environment_Data(){
@@ -673,7 +673,7 @@ void Update_System_On_Input(){
     #if VIRTUAL_ENVIRONMENT 
         // Virtual environment 
 
-        // --- [IR RECEIVER] --- \\
+        // --- [IR RECEIVER] --- 
         // Checks if the IR receiver has received a signal 
         if(irrecv.decode(&results)){
             unsigned int value = results.value; // Gets the value of the IR signal 
@@ -684,7 +684,7 @@ void Update_System_On_Input(){
         }
 
 
-        // --- [BUTTONS] --- \\
+        // --- [BUTTONS] --- 
 
         // Check if the AUTO button is pressed
         if(Active && Check_Button(AUTO_BUTTON)){
@@ -739,7 +739,7 @@ void Update_System_On_Input(){
             Fan_State = true; // Fan starts up 
         }
 
-        // --- [POTENTIOMETERS] --- \\
+        // --- [POTENTIOMETERS] --- 
 
         // Checks if the user wants to change the fan speed 
         if(Active && (Get_Set_Fan_Speed() != Fan_Speed)){
@@ -782,7 +782,7 @@ void Update_System_On_Input(){
     #else
         // Real environment 
 
-        // --- [IR RECEIVER] --- \\
+        // --- [IR RECEIVER] --- 
         // Checks if the IR receiver has received a signal 
         if(irrecv.decode(&results)){
             unsigned int value = results.value; // Gets the value of the IR signal 
@@ -792,7 +792,7 @@ void Update_System_On_Input(){
             rirecv.resume(); // Resumes the IR receiver
         }
 
-        // --- [BUTTONS] --- \\
+        // --- [BUTTONS] --- 
 
         // Check if the AUTO button is pressed
         if(Active && Check_Button(AUTO_BUTTON)){
@@ -847,7 +847,7 @@ void Update_System_On_Input(){
             Fan_State = true; // Fan starts up 
         }
 
-        // --- [POTENTIOMETERS] --- \\
+        // --- [POTENTIOMETERS] --- 
 
         // Checks if the user wants to change the fan speed
         if(Active && (Get_Set_Fan_Speed() != Fan_Speed)){
@@ -943,7 +943,7 @@ void Update_System_Components(){
     }
 
 
-    // --- [AUTO MODE] --- \\ 
+    // --- [AUTO MODE] --- 
 
     // Checks if the fan state on and if auto mode is enabled 
     if(Fan_State && System_Mode == "Auto"){
@@ -963,7 +963,7 @@ void Update_System_Components(){
         return; 
     }
 
-    // --- [MANUAL MODE] --- \\
+    // --- [MANUAL MODE] --- 
 
     // Checks if the fan state is on and if manual mode is enabled
     if(Fan_State && System_Mode == "Manual"){
@@ -1030,7 +1030,7 @@ void setup(){
     // Initializations
     Serial.begin(9600); // Starts the serial communication
     
-    // -- [INPUTS] -- \\
+    // -- [INPUTS] -- 
 
     // DIGITAL 
     pinMode(ON_BUTTON,INPUT); // Sets the ON button as an input
@@ -1045,7 +1045,7 @@ void setup(){
     pinMode(FAN_SPEED_CONTROL,INPUT); // Sets the fan speed control as an input 
     pinMode(TEMPERATURE_CONTROL,INPUT); // Sets the temperature control as an input
 
-    // -- [OUTPUTS] -- \\
+    // -- [OUTPUTS] -- 
     
     // DIGITAL 
     pinMode(GREEN_LED,OUTPUT); // Sets the green LED as an output
@@ -1056,7 +1056,7 @@ void setup(){
     pinMode(PIEZO,OUTPUT);
 
 
-    // -- [START] -- \\ 
+    // -- [START] -- 
 
     // Initializes the NeoPixel 
     NEO_PIXEL.begin(); 
