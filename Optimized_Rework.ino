@@ -3,6 +3,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <IRremote.hpp>
 
+// VERSION 1.5
 // -- Important Rules 
 // -- No Loops! 
 // -- Delay is not allowed to be used! 
