@@ -145,7 +145,7 @@ const unsigned int Neo_Pixel_Delay_Between_Lights = 500; // Delay between each l
 const unsigned int Max_LED_Brightness = 100; // Max Brightness of the LEDs [0 - 255]
 
 // LCD parameters
-const unsigned int LCD_Refresh_Rate = 1000; // How fast the LCD's updates [ms]
+const unsigned int LCD_Refresh_Rate = 500; // How fast the LCD's updates [ms]
 const unsigned int Max_LCD_Idle_Time = 5000; // Max time that the LCD can be idle before it turns off [ms]
 
 // Buzzer Tones 
@@ -172,10 +172,8 @@ bool Active = false; // Indicates whether the on or off button was pressed and a
 
 // LCD states 
 bool LCD_Active = false; // Indicates whether to turn off or on the backlight on the LCD's
-
-// IR SENSOR  
-IRrecv irrecv(IR_RECEIVER); // Creates a new IR Receiver 
-decode_results results; // Creates a new decode results object
+bool Display_Temperature_Setting = false; // Indicates whether to display the temperature setting 
+bool Display_Fan_Setting = false; // Indicates whether to display the fan setting
 
 // Auto Fan States 
 //bool Auto_Fan_State = false; // Indicates whether the auto fan is on or off 
@@ -214,8 +212,10 @@ Timer PWM_Timer;
 // LCD Timer 
 Timer LCD_Timer; 
 Timer LCD_Refresh_Timer;
-// PWM emulation Timer 
+// PWM emulation Timers 
 Timer LED_TIMER; 
+Timer MOTOR_TIMER; 
+Timer BUZZER_TIMER; 
 
 // Repeat value Cache for buttons 
 bool Button_State_Cache[3] = {false,false,false}; // Stores the previous state of the buttons
@@ -246,17 +246,41 @@ void Set_Fan_Speed(unsigned int Speed){
         return; 
     }
 
+    // Calculates the Duty cycle for the pin (Simulated PWM)
+    const double PWM_Frequency = 1024; 
+    double On_Duty_Cycle = PWM_Frequency - ((((double)Speed) / 255) * PWM_Frequency); // Calculates the on duty cycle of the PWM signal
+    //double Off_Duty_Cycle = PWM_Frequency - On_Duty_Cycle; // Calculates the off duty cycle of the PWM signal
+
+    // Checks if the brightness is 255 and if so just turn the LED on constantly 
+    if(Speed == 255){
+        digitalWrite(DC_MOTOR, HIGH);
+        return;
+    }else if(Speed == 0){
+        digitalWrite(DC_MOTOR, LOW);
+        return;
+    }
+
+    // Checks the time elapsed since the last change 
+    if(MOTOR_TIMER.Check_Time_Micros(On_Duty_Cycle)){
+        // Turns on the fan 
+        digitalWrite(DC_MOTOR, HIGH);
+    }else{
+        // Turns off the fan 
+        digitalWrite(DC_MOTOR, LOW);
+    }
+
+    //Serial.println("Fan Speed set to " + String(Speed) + " out of 255");
     // Turns on the fan 
-    analogWrite(DC_MOTOR, Speed);
+    //analogWrite(DC_MOTOR, Speed);
 }
 
 // Sets the brightness of any RGB LED on any pin 
 void Set_LED(unsigned int LED_NUMBER, unsigned int BRIGHTNESS){
 
     // Calculates the Duty cycle for the pin (Simulated PWM)
-    const double PWM_Frequency = 2040; 
-    double On_Duty_Cycle = PWM_Frequency - (((255.0 - (double)BRIGHTNESS) / 255) * PWM_Frequency); // Calculates the on duty cycle of the PWM signal
-    double Off_Duty_Cycle = PWM_Frequency - On_Duty_Cycle; // Calculates the off duty cycle of the PWM signal
+    const double PWM_Frequency = 1024; 
+    double On_Duty_Cycle = PWM_Frequency - ((((double)BRIGHTNESS) / 255) * PWM_Frequency); // Calculates the on duty cycle of the PWM signal
+   // double Off_Duty_Cycle = PWM_Frequency - On_Duty_Cycle; // Calculates the off duty cycle of the PWM signal
 
     // Checks if the brightness is 255 and if so just turn the LED on constantly 
     if(BRIGHTNESS == 255){
@@ -281,16 +305,26 @@ void Set_LED(unsigned int LED_NUMBER, unsigned int BRIGHTNESS){
 // Reads the data from the temperature sensor [LM35] [C]
 float Get_Temperature(){
     // Voltage [0 - 10mv]
-    float Voltage = analogRead(TEMPERATURE_CONTROL); 
+    float Voltage = analogRead(TEMPERATURE_SENSOR); 
 
     // Checks whether we are in a virtual environment or not 
     #if VIRTUAL_ENVIRONMENT
-        Serial.println(Voltage); 
+        float Converted_Voltage = Voltage * (5.0 / 1023.0); // Converts the voltage to a value between 0 and 5 volts
+
+        // Converts it into a temperature 
+        float Temperature = (Converted_Voltage - 0.5) * 100; // Converts the voltage to a temperature in celsius
+
         // Virtual environment (TPM36)
-        return (Voltage * 5) / 1024.0; // Returns the temperature in celsius
+        return Temperature; 
     #else
         // Real environment (LM35) 
-        return (Voltage /10); 
+
+        // Gets the signal and converts it to voltage 
+        float Converted_Voltage = Voltage * (5.0 / 1023.0); // Converts the voltage to a value between 0 and 5 volts
+
+        float Temperature = Converted_Voltage * 100; 
+
+        return Temperature; 
     #endif
 }
 
@@ -305,9 +339,9 @@ float Get_Humidity(){
         // Max 876
         return (Voltage / 876.0) * 100; 
     #else 
-        // In a real environment (Unknown sensor)
-        Serial.println("Unknown humidity sensor! Please refer to pinout"); 
-        return Voltage; 
+        // In a real environment (Some random humidity sensor lmao)
+        // Max 1023
+        return (Voltage / 1023.0) * 100;
     #endif
 }
 
@@ -337,23 +371,36 @@ int Get_Set_Temperature(){
 // Buzzes the buzzer for a certain duration 
 void Buzz(){
 
-    // Checks if the buzzer duration has passed since the last buzz to prevent the buzzer from constantly buzzing if called multiple times
-    if(Buzzer_Timer.Check_Time_Millis(Buzzer_Duration)){
-        // Sets the buzzer to not buzzing 
-        Buzzing = false;
-    }
-
-
-    // Checks if the current buzzer is buzzing 
+    // Checks if the buzzer needs to buzz 
     if(Buzzing){
-        Serial.println("Buzzer is already buzzing!"); 
-        return; // Returns as the buzzer is already buzzing
+        // Checks if the timer has passed in the buzzer duration 
+        if(BUZZER_TIMER.Check_Time_Millis(Buzzer_Duration)){
+            // Sets the buzzer to not buzzing 
+            Buzzing = false;
+        }
+
+        digitalWrite(PIEZO, HIGH);
+    }else{
+        digitalWrite(PIEZO, LOW);
     }
+
+
+    // Checks if the buzzer duration has passed since the last buzz to prevent the buzzer from constantly buzzing if called multiple times
+    // if(Buzzing && Buzzer_Timer.Check_Time_Millis(Buzzer_Duration)){
+    //     // Sets the buzzer to not buzzing 
+    //     Buzzing = false;
+    // }
+
+    // // Checks if the current buzzer is buzzing 
+    // if(Buzzing){
+    //     Serial.println("Buzzer is already buzzing!"); 
+    //     return; // Returns as the buzzer is already buzzing
+    // }
 
     // Sets the buzzer to buzzing
-    Buzzing = true;
+   // Buzzing = true;
 
-    tone(PIEZO,Buzzer_Frequency,Buzzer_Duration);
+    //tone(PIEZO,Buzzer_Frequency,Buzzer_Duration);
 }
 
 // Checks whether a specific button has been pressed 
@@ -445,8 +492,6 @@ void Display_Fan_Speed_Top(){
         CONTROL_LCD.print("Set Speed: ");
         CONTROL_LCD.print(Fan_Speed);
 
-        Control_Display_Changed = true; // Sets the display changed to true as we have just changed the display
-
     #else
         // Real environment display control 
 
@@ -489,8 +534,6 @@ void Display_Set_Temperature_Top(){
         CONTROL_LCD.print("Set Temp: ");
         CONTROL_LCD.print(Set_Temperature);
 
-        Control_Display_Changed = true; // Sets the display changed to true as we have just changed the display
-
     #else
         // Real environment display control 
 
@@ -522,7 +565,7 @@ void Display_Bottom_Basic(){
         // Virtual environment display control 
 
         // Checks if the display has changed 
-        if(!Status_Display_Changed){
+        if(Status_Display_Changed){
             STATUS_LCD.clear(); // Clears the top display 
             Status_Display_Changed = false; // Sets the display changed to false as we have just cleared the display
         }
@@ -560,6 +603,8 @@ void Display_Bottom_Basic(){
 
 // Updates the temperature and humidity data 
 void Update_Environment_Data(){
+    Serial.println("Updating Environment Data");
+
     // Gets the current temperature and humidity data
     float Current_Temperature = Get_Temperature();
     float Current_Humidity = Get_Humidity();
@@ -610,24 +655,16 @@ void Update_Environment_Data(){
 void Update_System_On_Input(){
     // Checks if we are in a virtual environment or a real environment
     #if VIRTUAL_ENVIRONMENT 
-        // Virtual environment 
-
-        // --- [IR RECEIVER] --- 
-        // Checks if the IR receiver has received a signal 
-        // if(irrecv.decode(&results)){
-        //     unsigned int value = results.value; // Gets the value of the IR signal 
-        //     Serial.print("IR Signal Received: "); // Prints the IR signal value
-        //     Serial.println(value);
-        //     Serial.println("---------------------------");
-        //     irrecv.resume(); // Resumes the IR receiver
-        // }
-
+        // Virtual environment
 
         // --- [BUTTONS] --- 
 
         // Check if the AUTO button is pressed
         if(Active && Check_Button(AUTO_BUTTON)){
             Serial.println("Auto Button was pressed!"); 
+
+            // Indicates that the buzzer needss to be buzzed 
+            Buzzing = true; 
 
             // Indicates that the display needs to be cleared
             Control_Display_Changed = true;
@@ -645,12 +682,15 @@ void Update_System_On_Input(){
             }
 
             // Buzzes the buzzer once 
-            Buzz(); 
+           // Buzz(); 
         }
 
         // Checks if the OFF button is pressed
         if(Active && Check_Button(OFF_BUTTON)){
             Serial.println("Off button was pressed!"); 
+
+            // Indicates that the buzzer needss to be buzzed 
+            Buzzing = true; 
 
             // Indicates that the display needs to be cleared 
             Control_Display_Changed = true;
@@ -666,6 +706,8 @@ void Update_System_On_Input(){
         // Checks if the ON button is pressed 
         if(!Active && Check_Button(ON_BUTTON)){
             Serial.println("On button was pressed!"); 
+            // Indicates that the buzzer needss to be buzzed 
+            Buzzing = true; 
 
             // Indicates that the display needs to be cleared 
             Control_Display_Changed = true;
@@ -687,6 +729,9 @@ void Update_System_On_Input(){
             // Indicates that the display needs to be cleared 
             Control_Display_Changed = true;
 
+            // Indicates that the fan setting needs to be displayed 
+            Display_Fan_Setting = true;
+
             // Indicates that the LCD backlight needs to be turned on
             LCD_Active = true; 
 
@@ -699,9 +744,6 @@ void Update_System_On_Input(){
 
             // Gets the new fan speed 
             Fan_Speed = Get_Set_Fan_Speed();
-
-            // Displays the new fan speed
-            Display_Fan_Speed_Top();
         }
 
         // Checks if the user wants to change the set temperature 
@@ -710,6 +752,9 @@ void Update_System_On_Input(){
 
             // Indicates that the display needs to be cleared 
             Control_Display_Changed = true;
+
+            // Indicates that the Set temperature display needs to be displayed 
+            Display_Temperature_Setting = true; 
 
             // Indicates that the LCD backlight needs to be turned on
             LCD_Active = true; 
@@ -724,9 +769,6 @@ void Update_System_On_Input(){
             // Gets the new set temperature 
             Set_Temperature = Get_Set_Temperature();
 
-            // Displays the new set temperature 
-            Display_Set_Temperature_Top();
-
         }
 
     #else
@@ -734,12 +776,12 @@ void Update_System_On_Input(){
 
         // --- [IR RECEIVER] --- 
         // Checks if the IR receiver has received a signal 
-        if(irrecv.decode(&results)){
-            unsigned int value = results.value; // Gets the value of the IR signal 
+        if(IrReceiver.decode()){
+            unsigned int value = IrReceiver.decodedIRData.decodedRawData; // Gets the IR signal value
             Serial.print("IR Signal Received: "); // Prints the IR signal value
-            Serial.println(value);
+            Serial.println(value,HEX);
             Serial.println("---------------------------");
-            rirecv.resume(); // Resumes the IR receiver
+            IrReceiver.resume(); // Resumes the IR receiver
         }
 
         // --- [BUTTONS] --- 
@@ -747,6 +789,9 @@ void Update_System_On_Input(){
         // Check if the AUTO button is pressed
         if(Active && Check_Button(AUTO_BUTTON)){
             Serial.println("Auto Button was pressed!"); 
+
+            // Indicates that the buzzer needss to be buzzed 
+            Buzzing = true; 
 
             // Indicates that the display needs to be cleared
             Display_Changed = true;
@@ -764,12 +809,15 @@ void Update_System_On_Input(){
             }
 
             // Buzzes the buzzer once 
-            Buzz(); 
+            //Buzz(); 
         }
 
         // Checks if the OFF button is pressed
         if(Active && Check_Button(OFF_BUTTON)){
             Serial.println("Off button was pressed!"); 
+
+            // Indicates that the buzzer needss to be buzzed 
+            Buzzing = true; 
 
             // Indicates that the display needs to be cleared 
             Display_Changed = true;
@@ -785,6 +833,9 @@ void Update_System_On_Input(){
         // Checks if the ON button is pressed
         if(!Active && Check_Button(ON_BUTTON)){
             Serial.println("On button was pressed!"); 
+
+            // Indicates that the buzzer needss to be buzzed 
+            Buzzing = true; 
 
             // Indicates that the display needs to be cleared 
             Display_Changed = true;
@@ -805,6 +856,9 @@ void Update_System_On_Input(){
             // Indicates that the display needs to be cleared 
             Display_Changed = true;
 
+            // Indicates that the fan setting needs to be displayed 
+            Display_Fan_Setting = true;
+
             // Indicates that the LCD backlight needs to be turned on
             LCD_Active = true; 
 
@@ -818,9 +872,6 @@ void Update_System_On_Input(){
             // Gets the new fan speed 
             Fan_Speed = Get_Set_Fan_Speed();
 
-            // Displays the new fan speed 
-            Display_Fan_Speed_Top(); 
-
         }
 
         // Checks if the user wants to change the set temperature
@@ -828,6 +879,9 @@ void Update_System_On_Input(){
             Serial.println("Set Temperature Potentiometer was changed!");
             // Indicates that the display needs to be cleared 
             Display_Changed = true;
+
+            // Indicates that the Set temperature display needs to be displayed 
+            Display_Temperature_Setting = true;
 
             // Indicates that the LCD backlight needs to be turned on
             LCD_Active = true; 
@@ -842,9 +896,6 @@ void Update_System_On_Input(){
             // Gets the new set temperature 
             Set_Temperature = Get_Set_Temperature();
 
-            // Displays the new set temperature 
-            Display_Set_Temperature_Top();
-
         }
     #endif
 
@@ -852,7 +903,7 @@ void Update_System_On_Input(){
 
 // Updates the actual system components based on the current system state 
 void Update_System_Components(){
-   
+    // Updates the LCD's
     // Checks whether the LCD backlight needs to be turned on or off after a certain amount of time 
     if(LCD_Active){ // LCD active
 
@@ -894,8 +945,7 @@ void Update_System_Components(){
 
         // Turns off the LEDs 
         Set_LED(RED_LED,Max_LED_Brightness); // Red LED is on
-        Set_LED(GREEN_LED,0); // Green LED is off
-        return; 
+        Set_LED(GREEN_LED,0); // Green LED is off 
     }else{
         // Turns on the LEDs
         Set_LED(RED_LED,0); // Red LED is off
@@ -904,21 +954,48 @@ void Update_System_Components(){
 
     // --- [DISPLAY]
 
-    // Displays the basic system information 
-    if(LCD_Refresh_Timer.Check_Time_Millis(LCD_Refresh_Rate)){
-        Display_Top_Basic(); 
+    // Checks what display needs to be shown 
+    if(Display_Fan_Setting){
+        // Displays the fan setting 
+        Display_Fan_Speed_Top();
+        Display_Fan_Setting = false;  
+        
+        // Checks environment 
+        #if VIRTUAL_ENVIRONMENT 
+            Control_Display_Changed = true;
+        #else
+            Display_Changed = true; 
+        #endif
+    }else if(Display_Temperature_Setting){
+        // Displays the temperature setting 
+        Display_Set_Temperature_Top();
+        Display_Temperature_Setting = false; 
+        
+        // Checks environment 
+        #if VIRTUAL_ENVIRONMENT 
+            Control_Display_Changed = true;
+        #else
+            Display_Changed = true; 
+        #endif
+    }else{
+        // Displays the basic system information 
+        if(LCD_Refresh_Timer.Check_Time_Millis(LCD_Refresh_Rate)){
+            Display_Top_Basic(); 
+        }
     }
     
+    // Displays the bottom basic Data [REQUIRED]
+    Display_Bottom_Basic(); 
 
     // --- [AUTO MODE] --- 
 
     // Checks if the fan state on and if auto mode is enabled 
     if(Fan_State && System_Mode == "Auto"){
-        
+         // Turns on the fan to cool down the room 
+        Serial.println("AUTO Mode!");
         // Checks if the current temperature is greater than the set temperature
         if(Get_Temperature() > Set_Temperature){
-            // Turns on the fan to cool down the room 
-            
+           
             // Calculates the auto fan speed 
             Auto_Fan_Speed = constrain(map(Temperature, Set_Temperature, 40, 0, 255),0,255);
 
@@ -927,7 +1004,6 @@ void Update_System_Components(){
             // Turns off the fan as the room is cooled to the set temperature
             Set_Fan_Speed(0);
         }
-        return; 
     }
 
     // --- [MANUAL MODE] --- 
@@ -936,7 +1012,6 @@ void Update_System_Components(){
     if(Fan_State && System_Mode == "Manual"){
         // Sets the fan speed to the set fan speed 
         Set_Fan_Speed(Fan_Speed);
-        return; 
     }
 }
 
@@ -961,9 +1036,6 @@ void Update_Neo_Pixel(){
 
     Neo_Pixel_State = true; // Indicates that the Neo_Pixel is on
 
-    // Sets the Neo_Pixel max brightness 
-    NEO_PIXEL.setBrightness(Max_Neo_Pixel_Brightness);
-
     // Gets the individual colors in the array pattern 
     int R = Neo_Pixel_Color_Pattern[Pixel_Pattern_Index][0];
     int G = Neo_Pixel_Color_Pattern[Pixel_Pattern_Index][1];
@@ -971,6 +1043,8 @@ void Update_Neo_Pixel(){
 
     // Sets the Neo_Pixel color 
     NEO_PIXEL.setPixelColor(Pixel_Light_Index, R, G, B);
+    // Sets the Neo_Pixel max brightness 
+    NEO_PIXEL.setBrightness(Max_Neo_Pixel_Brightness);
     NEO_PIXEL.show();
 
     // Increments the pixel light index 
@@ -1003,10 +1077,13 @@ void setup(){
     // -- [INPUTS] -- 
 
     // DIGITAL 
+
+    // IR receiver 
+    IrReceiver.begin(IR_RECEIVER,true); // Starts the IR receiver
+
     pinMode(ON_BUTTON,INPUT); // Sets the ON button as an input
     pinMode(OFF_BUTTON,INPUT); // Sets the OFF button as an input
     pinMode(AUTO_BUTTON,INPUT); // Sets the AUTO button as an input
-    irrecv.enableIRIn(); // Starts the IR receiver
 
     // ANALOG
     pinMode(TEMPERATURE_SENSOR,INPUT); // Sets the temperature sensor as an input 
@@ -1055,7 +1132,15 @@ void setup(){
         CONTROL_LCD.noBacklight(); 
     #endif
 
-    
+    Display_Top_Basic(); // Displays the top basic information
+
+    // Updates the environment data on the system 
+    Update_Environment_Data();
+
+    // Updates the set temperature and set fan speed 
+    Fan_Speed = Get_Set_Fan_Speed(); 
+    Set_Temperature = Get_Set_Temperature();
+
     // Outputs to the serial monitor 
     Serial.println("System started correctly!"); 
 }
@@ -1063,21 +1148,21 @@ void setup(){
 
 // System Loop 
 void loop(){
+    Serial.println("Looping");
     // Updates the environment data on the system 
     Update_Environment_Data();
 
-    // Displays the bottom basic Data 
-    Display_Bottom_Basic(); 
-
     // Updates the system based on user input 
     Update_System_On_Input(); 
+
+    // Updates the buzzer 
+    Buzz(); 
 
     // Updates the system components based on the current system state 
     Update_System_Components();
 
     // Updates the NeoPixel 
     Update_Neo_Pixel(); 
-
 }
 
 
