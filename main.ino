@@ -63,6 +63,17 @@ Adafruit_NeoPixel NEOPIXEL(24,NEO_PIXEL_PIN,NEO_GRB + NEO_KHZ800);
 // ---------------- [TOP LEVEL SYSTEM VARIABLES] ----------------
 // System State 
 bool Integrity = true; // Indicates whether the system is able to continue program execution 
+// Special Characters 
+byte Degrees_Symbol[8] ={
+    B01100,
+    B10010,
+    B10010,
+    B01100,
+    B00000,
+    B00000,
+    B00000,
+    B00000
+};
 
 // ------------ [Enums] ------------ 
 enum Display_Name{
@@ -235,7 +246,7 @@ class Display : private Timer{
         }
 
         // Sets the LCD data onto the display 
-        void Write(char* Data,int X_Pos = 0, int Y_Pos = 0){
+        void Write(String Data,int X_Pos = 0, int Y_Pos = 0){
             // Checks if the LCD has been initialized 
             if(!this->Initialized){
                 // LCD has not been initialized 
@@ -374,6 +385,7 @@ class Display : private Timer{
         void Clear_Row(int Y_Pos = 0){
             // Checks the current runtime environment 
             #if VIRTUAL_ENVIRONMENT 
+            Serial.println("Clearing Row");
                 // Virtual Environment 
                 // Checks which LCD to clear 
                 if(this->LCD_NAME == TOP){
@@ -451,17 +463,6 @@ const float Change_In_Set_Temperature_Tolerance = 0.8; // The tolerance of the c
 const unsigned int LCD_Switch_Screen_Delay = 1000; // The delay between switching screens in milliseconds
 const unsigned int Max_LCD_Refresh = 500; // The maximum refresh rate of the LCD in milliseconds
 
-// Special Characters 
-byte Degrees_Symbol[8] ={
-    B01100,
-    B10010,
-    B10010,
-    B01100,
-    B00000,
-    B00000,
-    B00000,
-    B00000
-};
 
 // ---------------- [Objects] ----------------
 
@@ -477,14 +478,14 @@ byte Degrees_Symbol[8] ={
 
 // Timers 
 
-Timer LCD_Timer; // The timer that switches the LCD screens
-Timer LCD_Clear_Timer; // The timer that clears the LCD 
-Timer Neo_Pixel_Timer; 
+Timer LCD_Timer("LCD TIMER"); // The timer that switches the LCD screens
+Timer LCD_Clear_Timer("LCD CLEAR TIMER"); // The timer that clears the LCD 
+Timer Neo_Pixel_Timer("NEO PIXEL TIMER"); 
 
 // System States 
 
 // System is on or off 
-char* System_Mode = "Manual"; // The mode that the system is in [Manual, Auto]
+String System_Mode = "Manual"; // The mode that the system is in [Manual, Auto]
 bool Active = false; // Whether the system is active or not (Power button is pressed)
 
 float Set_Temperature = 0; // The temperature that the user sets
@@ -504,7 +505,7 @@ bool Status_Changed = false; // Indicates whether any of the system variables ha
 bool Button_State_Cache[3] = {false,false,false}; // The button state cache
 unsigned int Pixel_Light_Index = 0; 
 unsigned int Pixel_Pattern_Index = 0; 
-unsigned int Pixel_Pattern_Size = 0; // Size of the color pattern array 
+unsigned int Pixel_Pattern_Size = 7; // Size of the color pattern array 
 // ------------ [Functions] ------------
 
 // Gets the temperature from the temperature sensor : returns [Celsius]
@@ -620,6 +621,7 @@ void Update_System_On_Input(){
         
         //Checks if the auto button was pressed 
         if(Active && Check_Button(AUTO_BUTTON)){
+            Serial.println("Auto Button Pressed!");
             // Buzzes the buzzer 
             Buzz(); 
 
@@ -637,6 +639,7 @@ void Update_System_On_Input(){
 
         // Checks if the on button was pressed 
         if(!Active && Check_Button(ON_BUTTON)){
+            Serial.println("On Button Pressed!");
             // Buzzes the buzzer 
             Buzz(); 
 
@@ -644,11 +647,12 @@ void Update_System_On_Input(){
             Active = true; 
 
             // Updates the display 
-            Display_Top.Clear_Row(0); // Clears the first top status row 
+            Display_Top.Clear_Row(1); // Clears the first top status row 
         }
 
         // Checks if the off button was pressed
         if(Active && Check_Button(OFF_BUTTON)){
+            Serial.println("Off Button Pressed!");
             // Buzzes the buzzer 
             Buzz(); 
 
@@ -656,7 +660,7 @@ void Update_System_On_Input(){
             Active = false; 
 
             // Updates the display 
-            Display_Top.Clear_Row(0); // Clears the first top status row 
+            Display_Top.Clear_Row(1); // Clears the first top status row 
         }
 
 
@@ -664,6 +668,7 @@ void Update_System_On_Input(){
 
         // Checks if the user changed the set fan speed 
         if(Active && abs(Get_Set_Fan_Speed() - Fan_Speed) > Change_In_Fan_Speed_Tolerance){
+            Serial.println("Fan Speed Changed!");
             // Buzzes the buzzer 
             Buzz(); 
 
@@ -676,6 +681,7 @@ void Update_System_On_Input(){
 
         // Checks if the user changed the set temperature
         if(Active && abs(Get_Set_Temperature() - Set_Temperature) > Change_In_Set_Temperature_Tolerance){
+        Serial.println("Set Temperature Changed!");
         // Buzzes the buzzer 
         Buzz(); 
 
@@ -691,6 +697,7 @@ void Update_System_On_Input(){
         
         //Checks if the auto button was pressed 
         if(Active && Check_Button(AUTO_BUTTON)){
+            Serial.println("Auto Button Pressed!");
             // Buzzes the buzzer 
             Buzz(); 
     
@@ -709,6 +716,7 @@ void Update_System_On_Input(){
     
         // Checks if the on button was pressed 
         if(!Active && Check_Button(ON_BUTTON)){
+            Serial.println("On Button Pressed!");
             // Buzzes the buzzer 
             Buzz(); 
     
@@ -721,6 +729,7 @@ void Update_System_On_Input(){
     
         // Checks if the off button was pressed
         if(Active && Check_Button(OFF_BUTTON)){
+            Serial.println("Off Button Pressed!");
             // Buzzes the buzzer 
             Buzz(); 
     
@@ -735,6 +744,7 @@ void Update_System_On_Input(){
 
         // Checks if the user changed the set fan speed
         if(Active && abs(Get_Set_Fan_Speed() - Fan_Speed) > Change_In_Fan_Speed_Tolerance){
+            Serial.println("Fan Speed Changed!");
             // Buzzes the buzzer 
             Buzz(); 
     
@@ -747,6 +757,7 @@ void Update_System_On_Input(){
 
         // Checks if the user changed the set temperature
         if(Active && abs(Get_Set_Temperature() - Set_Temperature) > Change_In_Set_Temperature_Tolerance){
+            Serial.println("Set Temperature Changed!");
             // Buzzes the buzzer 
             Buzz(); 
     
@@ -773,7 +784,37 @@ void Update_System_Components(){
             // Real Environment 
             Main_Display.Backlight(true);
         #endif
+
+        // Turns on the Green LED 
+        digitalWrite(GREEN_LED, HIGH);
+        digitalWrite(RED_LED,LOW);  
+    }else{
+        // Turns off the LCD backlights 
+        #if VIRTUAL_ENVIRONMENT 
+            // Virtual Environment 
+            Display_Top.Backlight(false); 
+            Display_Bottom.Backlight(false);
+        #else
+            // Real Environment 
+            Main_Display.Backlight(false);
+        #endif
+
+        // Turns off the fan state 
+        Fan_State = false; 
+
+        // Clears the NeoPixel 
+        NEOPIXEL.clear(); 
+        NEOPIXEL.show();
+
+        // Resets the NeoPixel index 
+        Pixel_Light_Index = 0; 
+        Pixel_Pattern_Index = 0; 
+
+        // Turns off the Green LED 
+        digitalWrite(GREEN_LED, LOW);
+        digitalWrite(RED_LED,HIGH);
     }
+
 
     // ---- [AUTO MODE] ----
 
@@ -783,7 +824,7 @@ void Update_System_Components(){
         if(Get_Temperature() > Set_Temperature){
             // Turns on the fan 
             Fan_State = true; 
-        }else{
+        }else if(!Active){
             // Turns off the fan 
             Fan_State = false; 
         }
@@ -796,8 +837,8 @@ void Update_System_Components(){
         // Checks if the fan speed is greater than 0 
         if(Fan_Speed >= 50){
             // Turns on the fan 
-            Fan_State = true; 
-        }else{
+            Fan_State = true;
+        }else if(!Active){
             // Turns off the fan 
             Fan_State = false; 
         }
@@ -836,22 +877,22 @@ void Update_System_Components(){
 
             // Gets the temperature as a string
             String Set_Temp_String = String(Set_Temperature);
-            char Result[32]; 
-            Set_Temp_String.toCharArray(Result,32);
             int Length = Set_Temp_String.length();// Gets the length 
 
             // Calculates the postion of where the cursor needs to be to properly place the degrees symbol and C 
             int Position = 16 - Length - 2; 
 
             // Displays the set temperature 
-            Display_Top.Write(strcat("Set Temp: ",Result),0,0); // Displays the set temperature 
-            Display_Top.Write(0,Position,0); // Displays the degrees symbol and C
-            Display_Top.Write("C",Position + 1,0); // Displays the degrees symbol and C
+            Display_Top.Write("Set Temp: " + String(Set_Temperature),0,0); // Displays the set temperature 
+            // Display_Top.Write(0,Position,0); // Displays the degrees symbol and C
+            // Display_Top.Write("C",Position + 1,0); // Displays the degrees symbol and C
 
             // Waits a few seconds before switching back to the main screen 
             if(LCD_Timer.Milliseconds(LCD_Switch_Screen_Delay)){
                 // Switches back to the main screen 
                 Display_SetTemp = false; 
+                // Clears the display row once it is finished 
+                Display_Top.Clear_Row(0);
             }
 
             // Returns 
@@ -873,23 +914,23 @@ void Update_System_Components(){
            
             // Gets the fan speed as a string
             String Fan_Speed_String = String(Fan_Speed);
-            char Result[32]; 
-            Fan_Speed_String.toCharArray(Result,32);
             int Length = Fan_Speed_String.length();// Gets the length 
 
             // Calculates the postion of where the cursor needs to be to properly place the degrees symbol and C 
             int Position = 16 - Length - 2; 
 
             // Displays the set fan speed 
-            Display_Top.Write(strcat("Set Fan Speed: ",Result),0,0); // Displays the set fan speed 
-            Display_Top.Write(0,Position,0); // Displays the degrees symbol and C
-            Display_Top.Write("%",Position + 1,0); // Displays the degrees symbol and C
+            Display_Top.Write("Set Fan Speed: " + String(Fan_Speed) + "%",0,0); // Displays the set fan speed 
+            // Display_Top.Write(0,Position,0); // Displays the degrees symbol and C
+            // Display_Top.Write("%",Position + 1,0); // Displays the degrees symbol and C
 
             // Waits a few seconds before switching back to the main screen 
             if(LCD_Timer.Milliseconds(LCD_Switch_Screen_Delay)){
                 // Switches back to the main screen 
                 Display_FanSpeed = false; 
                 Display_FanSpeed_Cleared = false; // Resets the display cleared variable
+                // Clears the display row once it is finished 
+                Display_Top.Clear_Row(0);
             }
 
             // Returns 
@@ -897,9 +938,8 @@ void Update_System_Components(){
         }
 
         // Displays the main screen
-        
-        Display_Top.Write(strcat("Mode: ",System_Mode),0,0); // Displays the system mode
-        Display_Top.Write(strcat("Fan State: ",(Fan_State) ? "On" : "Off"),0,1); // Displays the fan state
+        Display_Top.Write("Mode: " + System_Mode,0,0); // Displays the system mode
+        Display_Top.Write("Fan State: " + (String)((Fan_State == 1) ? "On" : "Off"),0,1); // Displays the fan state
     #else
         // Real Environment 
         // Checks if the display should be updated 
@@ -919,22 +959,21 @@ void Update_System_Components(){
 
             // Gets the temperature as a string
             String Set_Temp_String = String(Set_Temperature);
-            char Result[32]; 
-            Set_Temp_String.toCharArray(Result,32);
             int Length = Set_Temp_String.length();// Gets the length 
 
             // Calculates the postion of where the cursor needs to be to properly place the degrees symbol and C 
             int Position = 16 - Length - 2; 
 
             // Displays the set temperature 
-            Main_Display.Write(strcat("Set Temp: ",Result),0,0); // Displays the set temperature 
-            Main_Display.Write(0,Position,0); // Displays the degrees symbol and C
-            Main_Display.Write("C",Position + 1,0); // Displays the degrees symbol and C
+            Main_Display.Write("Set Temp: " + String(Set_Temperature),0,0); // Displays the set temperature 
+            // Main_Display.Write(0,Position,0); // Displays the degrees symbol and C
+            // Main_Display.Write("C",Position + 1,0); // Displays the degrees symbol and C
 
             // Waits a few seconds before switching back to the main screen 
             if(LCD_Timer.Milliseconds(LCD_Switch_Screen_Delay)){
                 // Switches back to the main screen 
                 Display_SetTemp = false; 
+                Main_Display.Clear_Row(0); // Clears the first top status row
             }
 
             // Returns 
@@ -963,9 +1002,9 @@ void Update_System_Components(){
             // Calculates the postion
             int Position = 16 - Length - 2; 
             // Displays the set fan speed 
-            Main_Display.Write(strcat("Set Fan Speed: ",Result),0,0); // Displays the set fan speed 
-            Main_Display.Write(0,Position,0); // Displays the degrees symbol and C
-            Main_Display.Write("%",Position + 1,0); // Displays the degrees symbol and C
+            Main_Display.Write("Set Fan Speed: " + String(Fan_Speed) + "%",0,0); // Displays the set fan speed 
+            // Main_Display.Write(0,Position,0); // Displays the degrees symbol and C
+            // Main_Display.Write("%",Position + 1,0); // Displays the degrees symbol and C
 
             // Waits a few seconds before switching back to the main screen 
             if(LCD_Timer.Milliseconds(LCD_Switch_Screen_Delay)){
@@ -979,8 +1018,8 @@ void Update_System_Components(){
         }
 
         // Displays the main screen
-        Main_Display.Write(strcat("Mode: ",System_Mode),0,0); // Displays the system mode
-        Main_Display.Write(strcat("Fan State: ",(Fan_State) ? "On" : "Off"),0,1); // Displays the fan state
+        Main_Display.Write("Mode: " + System_Mode,0,0); // Displays the system mode
+        Main_Display.Write("Fan State: " + (Fan_State == 1) ? "On" : "Off",0,1); // Displays the fan state
     #endif
 }
 
@@ -1086,16 +1125,15 @@ void setup(){
         Main_Display.Backlight(true); // Turns on the backlight on the LCD
     #endif
 
+    //Gets the set temperature and set fan speed 
+    Fan_Speed = Get_Set_Fan_Speed(); 
+    Set_Temperature = Get_Set_Temperature();   
+
 }
 
 
 void loop(){
-   // Updates the environment data 
-    Update_Environment_Data();
-
-    // Checks user input 
+    Update_Environment_Data(); 
     Update_System_On_Input(); 
-
-    // Updates system components 
     Update_System_Components();
 }
