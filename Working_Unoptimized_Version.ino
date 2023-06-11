@@ -5,7 +5,7 @@
 #include <IRremote.hpp>
 
 // Definitions 
-#define VIRTUAL_ENVIRONMENT true
+#define VIRTUAL_ENVIRONMENT false
 
 // Buttons
 #define AUTO_BUTTON 8
