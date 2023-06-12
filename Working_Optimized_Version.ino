@@ -102,7 +102,11 @@ const unsigned int Buzzer_Frequency = 100; // The frequency of the buzzer in her
 const unsigned int Buzzer_Duration = 100; // The duration of the buzzer in milliseconds
 
 // Sensor Configurations 
-const float Temperature_Change_Tolerance = 2.5; // The tolerance of the change detection in Celsius
+
+// Sensor delays 
+const float Temperature_Sensor_Refresh_Rate = 5000; // The rate that we read the temperature from the temperature sensor
+
+const float Temperature_Change_Tolerance = 3.5; // The tolerance of the change detection in Celsius
 const float Change_In_Fan_Speed_Tolerance = 2; // The tolerance of the change in fan speed 
 const float Change_In_Set_Temperature_Tolerance = 2; // The tolerance of the change in set temperature
 
@@ -111,7 +115,7 @@ const float Change_In_Set_Temperature_Tolerance = 2; // The tolerance of the cha
 // LCD switch screen delay 
 Screen Current_Screen = MAIN; // The current screen that the LCD is displaying
 const unsigned int LCD_Switch_Screen_Delay = 2000; // The delay between switching screens in milliseconds
-const unsigned int Max_TEMP_LCD_Refresh_Rate = 100; // The maximum refresh rate of the LCD in milliseconds
+const unsigned int Max_TEMP_LCD_Refresh_Rate = 500; // The maximum refresh rate of the LCD in milliseconds
 
 // ==== [SYSTEM STATES] ====
 
@@ -135,6 +139,9 @@ bool Status_Changed = false; // Indicates whether any of the system variables ha
 
 bool Set_Fan_Speed_Changed = false; // Indicates whether the set fan speed has changed 
 bool Set_Temp_Changed = false; // Indicates whether the set temperature has changed
+
+// Temperature sensors 
+bool Refreshed = false; // Indicates whether the temperature has been refreshed 
 
 // NeoPixel 
 bool Neo_Pixel_State = false; // Indicates whether the NeoPixel is on or off
@@ -227,6 +234,7 @@ Button AUTO_Button(AUTO_BUTTON); // Auto button
 Timer LCD_Switch_Screen_Timer; // Timer that keeps track time elapsed for the switch screen delay 
 Timer LCD_Refresh_Rate_Timer; // Timer that keeps track of the time elapsed for the LCD refresh rate
 Timer Neo_Pixel_Timer; // How fast the Neo_Pixel changes colors or turns on and off
+Timer Update_Environment_Timer; // Timer that keeps track of the time elapsed for the update environment rate
 
 
 // ------------ [Functions] ------------
@@ -290,6 +298,15 @@ inline void Buzz(){
 
 // Updates the environment sensors (Temperature sensors)
 inline void Update_Environment_Data(){
+    // Checks if the delay has not passed and returns nothing
+    if(!Update_Environment_Timer.Milliseconds(Temperature_Sensor_Refresh_Rate)){
+        Refreshed = false; // Indicates that the refresh is not true as we do not refresh the temperature
+        return;  // exits code execution
+    }else{
+        // Indicates that we refresh the temperature 
+        Refreshed = true; 
+    }
+
     // Gets the temperature data 
     float Current_Temperature = Get_Temperature();
 
@@ -494,9 +511,17 @@ void Update_System_Components(){
     // Checks if the system is in auto mode 
     if(System_Mode == "Auto"){
         // Checks if the temperature is above the set temperature 
-        if(Get_Temperature() > Set_Temperature){
+        if(Temperature > Set_Temperature){
+            // Checks if the fan state has changed 
+            if(Fan_State != true){
+                Status_Changed = true; // Indicates that the status has changed 
+            }
             Fan_State = true; // Turns on the fan 
         }else{
+            // Checks if the fan state has changed 
+            if(Fan_State != false){
+                Status_Changed = true; // Indicates that the status has changed 
+            }
             Fan_State = false; // Turns off the fan 
         }
     }
@@ -525,6 +550,8 @@ void Update_System_Components(){
             // Sets the fan speed to the fan speed set by the user 
             analogWrite(DC_MOTOR,Fan_Speed); 
        }
+    }else{
+        analogWrite(DC_MOTOR,0); 
     }
 
     // ---- [Displays] ----
@@ -624,23 +651,20 @@ void Update_System_Components(){
 
         // Displays the bottom display temperature in specific intervals 
         if(LCD_Refresh_Rate_Timer.Milliseconds(Max_TEMP_LCD_Refresh_Rate)){
-            // Gets the temperature 
-            float Current_Temperature = Get_Temperature(); 
-
-            // Checks if the temperature has changed 
-            bool Temperature_Changed = (Current_Temperature != Temperature);
-
-            if(Temperature_Changed){
+            
+            // Checks if the temperature has been refreshed 
+            if(Refreshed){
                 // Clears the bottom LCD 
                 BOTTOMLCD.setCursor(0,1); 
                 BOTTOMLCD.print("                ");
             }
+           
             
             // Displays the temperature on the bottom LCD 
             BOTTOMLCD.setCursor(0,0); 
             BOTTOMLCD.print("Temperature"); 
             BOTTOMLCD.setCursor(0,1);
-            BOTTOMLCD.print("Temp: " + (String) Current_Temperature + "C");
+            BOTTOMLCD.print("Temp: " + (String) Temperature + "C");
         }
     #else 
         // Real environment
@@ -743,23 +767,19 @@ void Update_System_Components(){
         // Displays the bottom display temperature in specific intervals 
         if(LCD_Refresh_Rate_Timer.Milliseconds(Max_TEMP_LCD_Refresh_Rate)){
             
-            // Gets the current temperature 
-            float Current_Temperature = Get_Temperature();
-
-            // Checks if the current temperature has changed and if so it will clear the lcd
-            bool Temperature_Changed = Temperature != Current_Temperature;
-
-            if(Temperature_Changed){
+            // Checks if the temperature has been refreshed 
+            if(Refreshed){
                 // Clears the bottom part of the 20 x4 lcd panel
                 LCD.setCursor(0,3); 
                 LCD.print("                ");
             }
+            
 
             // Displays the temperature on the bottom LCD 
             LCD.setCursor(0,2); 
             LCD.print("Temperature"); 
             LCD.setCursor(0,3);
-            LCD.print("Temp: " + (String) Current_Temperature + "C");
+            LCD.print("Temp: " + (String) Temperature + "C");
         }
     #endif
 }
@@ -795,7 +815,7 @@ void Update_Neo_Pixel(){
     if(!Active){
         return; // Returns as the system is inactive 
     }
-
+    Neo_Pixel_State = true; // Neopixel is on 
     // Checks if the neopixel time has not elapsed
     if(Neo_Pixel_Mode != SPEED_DEMON && !Neo_Pixel_Timer.Milliseconds(Neo_Pixel_Delay_Between_Lights)){
         // Returns as the delay between lights has not elapsed
@@ -896,11 +916,15 @@ void setup(){
     Fan_Speed = Get_Set_Fan_Speed(); 
     Set_Temperature = Get_Set_Temperature();
 
+    // Updates the current temperature with the current temperature in the environment 
+    Temperature = Get_Temperature(); 
+
     Serial.println("System Started Successfully"); // Prints that the system has started successfully
 }
 
 // update 
 void loop(){
+
     // Updates the environment data 
     Update_Environment_Data();
 
