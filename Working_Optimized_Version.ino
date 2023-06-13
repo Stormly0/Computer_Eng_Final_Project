@@ -1,4 +1,6 @@
-// VERSION 2.0 Beta
+// VERSION 3.0 
+// Added: IR sensor support 
+
 // IMPORTS 
 #include <Adafruit_NeoPixel.h>
 #include <LiquidCrystal_I2C.h>
@@ -28,7 +30,6 @@
 
 // Temperature Sensor 
 #define TEMPERATURE_SENSOR A2
-//#define HUMIDITY_SENSOR A3
 
 // Potentionmeters 
 #define FAN_SPEED_CONTROL A1
@@ -142,6 +143,10 @@ bool Set_Temp_Changed = false; // Indicates whether the set temperature has chan
 
 // Temperature sensors 
 bool Refreshed = false; // Indicates whether the temperature has been refreshed 
+
+// IR Sensors 
+bool Repeat_Code = false; // Indicates whether the button is held down or not
+unsigned long Previous_Code = 0x00000000; // The previous code that was received from the IR sensor
 
 // NeoPixel 
 bool Neo_Pixel_State = false; // Indicates whether the NeoPixel is on or off
@@ -338,6 +343,47 @@ void Update_System_On_Input(){
             // Sets the status change to true as the system state has changed 
             Status_Changed = true; 
         }
+        
+        // Checks for an IR receiver signal 
+        if(IrReceiver.decode()){
+            // Gets the value of the data received 
+            unsigned long Data = IrReceiver.decodedIRData.decodedRawData;
+
+            // Checks the runtime environment 
+            #if VIRTUAL_ENVIRONMENT
+                // Virtual environment 
+                Serial.println(F("Wireless ON PRESSED")); 
+                
+                // Checks if the button pressed is the on button 
+                if(Data == 0xFF00BF00){
+                    // Turns on the system 
+                    Active = true;
+
+                    // Sets the status change to true as the system state has changed
+                    Status_Changed = true;
+
+                    // Buzzes the buzzer
+                    Buzz();
+                }
+            #else 
+                // Real environment 
+                Serial.println(F("Wireless ON PRESSED"));
+
+                // Checks if the button pressed is the on button 
+                if(Data == 0xFFC23D){
+                    // Turns on the system 
+                    Active = true;
+
+                    // Sets the status change to true as the system state has changed
+                    Status_Changed = true;
+
+                    // Buzzes the buzzer
+                    Buzz();
+                }
+            #endif
+
+        }
+
         // Returns as the system does not need to check for any other input besides the on button
         return;  
     }
@@ -423,6 +469,163 @@ void Update_System_On_Input(){
         Set_Temp_Changed = true; 
     }
 
+    // ---- [IR RECEIVER] ----
+
+    // Checks if the IR receiver has received a signal 
+    if(IrReceiver.decode()){
+        // Gets the value of the data received 
+        unsigned long Data = IrReceiver.decodedIRData.decodedRawData;
+
+        // Checks if it is a repeat code
+        if(Data == 0 || Data == 0xFFFFFFFF){
+            // Sets the repeat code flag to true as the button is being held down 
+            Repeat_Code = true;
+
+            // Sets the data to the previous code 
+            Data = Previous_Code;
+        }else{
+            // Sets the previous code 
+            Previous_Code = Data;
+
+            // Sets the repeat code flag to false 
+            Repeat_Code = false; 
+        }
+        
+        // Outputs the data into the serial monitor for debugging purposes 
+        Serial.print("Data Received from IR Sensor: "); 
+        Serial.println(Data,HEX);
+
+        // Checks runtime environment 
+        #if VIRTUAL_ENVIRONMENT 
+            // Virtual Environment
+            /*
+                Virtual environment IR remote codes [unsigned long] 
+                4278238976 || FF00BF00 - [POWER]
+                4111122176 || F50ABF00 - [Speed Increase]
+                4144545536 || F708BF00 - [Speed Decrease]
+            */
+
+           // Checks if the data received is the power button 
+        //    switch (Data)
+        //    {
+        //         case 0xFF00BF00: // On Button
+        //             // Checks if the system is active 
+        //             if(Active){
+        //                 // Turns the system off 
+        //                 Active = false; 
+        //             }else{
+        //                 // Turns the system on 
+        //                 Active = true; 
+        //             }
+        //             // Sets the status change to true as the system state has changed
+        //             Status_Changed = true;
+        //             break;
+        //         case 0xF50ABF00: // Speed Increase Button
+        //             // Checks if the current mode is auto and if so it will change it back to manual mode 
+        //             if(System_Mode == "Auto"){
+        //                 System_Mode = "Manual"; 
+        //             }
+                    
+        //             // Checks if the fan speed is at the maximum speed and will drop the request 
+        //             if(Fan_Speed >= 255){
+        //                 return; // Fan speed is already at it's maximum 
+        //             }
+
+        //             Fan_Speed += 1; // Increases the fan speed
+
+        //             // Sets the current screen to the fan speed screen 
+        //             ::Current_Screen = SET_FAN; 
+        //             // sets the set fan flag to true as the fan speed is currently being changed
+        //             Set_Fan_Speed_Changed = true;
+        //             break;
+        //         case 0xF708BF00: // Speed Decrease Button
+        //             // Checks if the current mode is auto and if so it will change it back to manual mode 
+        //             if(System_Mode == "Auto"){
+        //                 System_Mode = "Manual"; 
+        //             }
+                    
+        //             // Checks if the fan speed is at the minimum speed and will drop the request
+        //             if(Fan_Speed <= 0){
+        //                 return; // Fan speed is already at it's minimum 
+        //             }
+
+        //             Fan_Speed -= 1; // Decreases the fan speed
+
+        //             // Sets the current screen to the fan speed screen 
+        //             ::Current_Screen = SET_FAN; 
+        //             // sets the set fan flag to true as the fan speed is currently being changed
+        //             Set_Fan_Speed_Changed = true;
+        //             break;
+        //     default:
+        //         Serial.println("Code not recognised!"); 
+        //         break;
+        //    }
+
+        #else    
+            // Real environment 
+            /*
+                Real environment IR remote codes [unsigned long] 
+                16761405 || 0xFFC23D - [POWER]
+                16754775 || 0xFFA857 - [Speed Increase]
+                16769055 || 0xFFE01F - [Speed Decrease]
+            */
+
+            // Checks if the data received is the power button
+            switch(Data){
+                case 0xFFC23D: // On Button
+                    // Checks if the system is active 
+                    if(Active){
+                        // Turns the system off 
+                        Active = false; 
+                    }else{
+                        // Turns the system on 
+                        Active = true; 
+                    }
+                    // Sets the status change to true as the system state has changed
+                    Status_Changed = true;
+                    break;
+                case 0xFFA857: // Speed Increase Button
+                    // Checks if the current mode is auto and if so it will change it back to manual mode 
+                    if(System_Mode == "Auto"){
+                        System_Mode = "Manual"; 
+                    }
+                    
+                    // Checks if the fan speed is at the maximum speed and will drop the request 
+                    if(Fan_Speed >= 255){
+                        return; // Fan speed is already at it's maximum 
+                    }
+
+                    Fan_Speed += 1; // Increases the fan speed
+
+                    // Sets the current screen to the fan speed screen 
+                    ::Current_Screen = SET_FAN; 
+                    // sets the set fan flag to true as the fan speed is currently being changed
+                    Set_Fan_Speed_Changed = true;
+                    break;
+                case 0xFFE01F: // Speed Decrease Button
+                    // Checks if the current mode is auto and if so it will change it back to manual mode 
+                    if(System_Mode == "Auto"){
+                        System_Mode = "Manual"; 
+                    }
+                    
+                    // Checks if the fan speed is at the minimum speed and will drop the request
+                    if(Fan_Speed <= 0){
+                        return; // Fan speed is already at it's minimum 
+                    }
+
+                    Fan_Speed -= 1; // Decreases the fan speed
+
+                    // Sets the current screen to the fan speed screen 
+                    ::Current_Screen = SET_FAN; 
+                    // sets the set fan flag to true as the fan speed is currently being changed
+                    Set_Fan_Speed_Changed = true;
+                    break;
+                default:
+                    Serial.println("Code not recognised!"); 
+                    break;
+            }
+        #endif
+    }
 }
 
 
@@ -909,6 +1112,9 @@ void setup(){
     pinMode(RED_LED,OUTPUT); // Red LED
     pinMode(DC_MOTOR,OUTPUT); // DC Motor
     pinMode(PIEZO,OUTPUT); // Piezo
+
+    // Starts the IR sensor 
+    IrReceiver.begin(IR_RECEIVER); 
 
     // START 
 
