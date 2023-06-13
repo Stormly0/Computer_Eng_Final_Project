@@ -425,7 +425,6 @@ void Update_System_On_Input(){
 
 }
 
-
 // Updates the system components based on the current state of the system 
 void Update_System_Components(){
     // Checks if the system is inactive and will turn off all power intensive components 
