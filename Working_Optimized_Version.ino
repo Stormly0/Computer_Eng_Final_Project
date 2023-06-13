@@ -476,8 +476,8 @@ void Update_System_On_Input(){
         // Gets the value of the data received 
         unsigned long Data = IrReceiver.decodedIRData.decodedRawData;
 
-        // Checks if it is a repeat code
-        if(Data == 0 || Data == 0xFFFFFFFF){
+        // Checks if it is a repeat code and makes sure that it is not repeating the power on button
+        if((Data == 0 || Data == 0xFFFFFFFF) && Data != 0xFFC23D){
             // Sets the repeat code flag to true as the button is being held down 
             Repeat_Code = true;
 
