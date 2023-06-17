@@ -4,10 +4,9 @@
 // IMPORTS 
 #include <Adafruit_NeoPixel.h>
 #include <LiquidCrystal_I2C.h>
-#include <IRremote.hpp>
 
 // Definitions 
-#define VIRTUAL_ENVIRONMENT false
+#define VIRTUAL_ENVIRONMENT true
 
 // Buttons
 #define AUTO_BUTTON 8
@@ -26,7 +25,6 @@
 #define DC_MOTOR 11 
 
 // IR Receiver pin 
-// https://forum.arduino.cc/t/mega-2560-pwm-frequency/71434 
 #define IR_RECEIVER 12
 
 // Temperature Sensor 
